@@ -3,170 +3,93 @@
 [![Build Status](https://travis-ci.org/sclevine/spec.svg?branch=master)](https://travis-ci.org/sclevine/spec)
 [![GoDoc](https://godoc.org/github.com/sclevine/spec?status.svg)](https://godoc.org/github.com/sclevine/spec)
 
-Spec is a simple BDD test organizer for Go. It minimally extends the standard
-library `testing` package by facilitating easy organization of Go 1.7+
-[subtests](https://blog.golang.org/subtests).
+This is a fork of [`sclevine/spec`](https://github.com/sclevine/spec) --
+a simple BDD test organizer that runs on real `go test` subtests, no
+framework of its own, no assertions, no global state. For the full case
+for the base library (its design, its non-goals, its usage examples),
+**see [the original README](https://github.com/sclevine/spec#readme)** --
+this file only covers what this fork changes and why.
 
-Spec differs from other BDD libraries for Go in that it:
-- Does not reimplement or replace any functionality of the `testing` package
-- Does not provide an alternative test parallelization strategy to the `testing` package
-- Does not provide assertions
-- Does not encourage the use of dot-imports
-- Does not reuse any closures between test runs (to avoid test pollution)
-- Does not use global state, excessive interface types, or reflection
+Kept at the same import path (`github.com/woodie/spec`) so it can be
+pulled in via a `go.mod` `replace` directive with zero call-site changes if
+you're already using upstream `spec`.
 
-Spec is intended for gophers who want to write BDD tests in idiomatic Go using
-the standard library `testing` package. Spec aims to do "one thing right,"
-and does not provide a wide DSL or any functionality outside of test
-organization.
+## Why fork instead of just using upstream
 
-### This fork: extending spec for the current state of Go
+`sclevine/spec`'s last tag is from 2019. Its core design still holds up --
+real subtests, no test pollution between leaves, no assertion library
+opinion -- but Go has grown two features since then that let it do a bit
+more without giving up any of that: generics (1.18) and `t.Context()`
+(1.24). This fork is that gap, closed, as a small set of additions rather
+than a rewrite.
 
-This fork (`github.com/woodie/spec`, drop-in at the same import path so it
-can be pulled in via a `replace` directive with no call-site changes) adds a
-small set of features that Go's evolution since spec's original release now
-makes possible, without changing spec's own no-global-state, no-assertions,
-no-reimplemented-`testing` philosophy:
+## What this fork adds
 
-- **`it.Context()`** -- passes through the real `t.Context()` for the running
-  subtest, so specs can pass a `context.Context` to code under test.
+- **`it.Context()`** -- passes through the real `t.Context()` for the
+  running subtest, so specs can hand a `context.Context` to code under
+  test.
 - **`it.T()`** -- passes through the real `*testing.T` for the running
-  subtest, so `Before`/`After` bodies can call `t.TempDir()`, `t.Skip()`, etc.
-  without spec needing to grow assertion or lifecycle features of its own.
+  subtest, so `Before`/`After` bodies can call `t.TempDir()`, `t.Skip()`,
+  etc. without spec needing assertion or lifecycle features of its own.
 - **`Describe`/`AsContext()`** -- `Describe` is a plain type alias for `G`;
-  `describe.AsContext()` is a no-op method that returns the same `G` under a
-  second name, for RSpec-style `describe`/`context` duality without a second
-  colliding type alias (`Context` was already spoken for by `it.Context()`
-  above).
-- **`Var[T]`** -- a generics-based typed box (`NewVar[T]`, `.Set`, `.Get`) for
-  sharing a value between a `Before` and its sibling `it` blocks without an
-  `interface{}` cast at every read.
-- **`Aliases`/`RunAliased`** -- `Aliases(describe, it)` returns
-  `before, after, context` bound to `it.Before`, `it.After`, and
+  `describe.AsContext()` is a no-op method returning the same `G` under a
+  second name, for RSpec-style `describe`/`context` duality without a
+  second, colliding type alias (`Context` was already spoken for by
+  `it.Context()` above).
+- **`Var[T]`** -- a generics-based typed box (`NewVar[T]`, `.Set`, `.Get`)
+  for sharing a value between a `Before` and its sibling `it` blocks
+  without an `interface{}` cast at every read.
+- **`Aliases`/`RunAliased`** -- `Aliases(describe, it)` returns `before,
+  after, context` bound to `it.Before`, `it.After`, and
   `describe.AsContext()`; `RunAliased` wraps `Run` and passes all five
   (`describe`, `context`, `it`, `before`, `after`) directly as callback
-  parameters, so no per-file alias line is needed. This works everywhere spec
-  is imported -- it does not require any project-specific setup file (the Ruby
-  equivalent would be `spec_helper.rb`, but Go's lack of implicit/global
-  scoping means the closest analog is a small wrapper function, not a require).
+  parameters, so no per-file alias line is needed anywhere. Works
+  everywhere spec is imported -- no project-specific setup file required
+  (Ruby's equivalent would be `spec_helper.rb`; Go's lack of implicit
+  scoping means the closest analog is a small wrapper function, not a
+  require).
 
-None of the above were possible without generics (`Var[T]`) or without
-`t.Context()` existing on `*testing.T` (`it.Context()`) -- both landed after
-spec's original design. Each is scoped as an independently upstreamable
-addition; see `docs/COWORK.md` for the full reasoning behind each one and
-which existing spec mechanism (the same side-channel `Option` pattern
-`Out()` already used) each is built on.
+Each addition is scoped to be independently upstreamable as its own PR;
+see `docs/COWORK.md` for the reasoning behind each one and the existing
+spec mechanism (the same side-channel `Option` pattern upstream's own
+`Out()` already uses) each is built on.
 
 A companion library, [`github.com/woodie/expect`](https://github.com/woodie/expect),
 provides Gomega-style matchers (`Expect(t, x).To(Equal(y))`) for specs
 written with this fork, without adopting Gomega itself.
 
-### Features
-
-- Clean, simple syntax
-- Supports focusing and pending tests
-- Supports sequential, random, reverse, and parallel test order
-- Provides granular control over test order and subtest nesting
-- Provides a test writer to manage test output
-- Provides a generic, asynchronous reporting interface
-- Provides multiple reporter implementations
-
-### Notes
-
-- Use `go test -v` to see individual subtests.
-
-### Examples
-
-[Most functionality is demonstrated here.](spec_test.go#L238)
-
-Quick example:
+## Using the additions together
 
 ```go
 func TestObject(t *testing.T) {
-    spec.Run(t, "object", func(t *testing.T, when spec.G, it spec.S) {
-        var someObject *myapp.Object
+    spec.RunAliased(t, "object", func(t *testing.T, describe, context spec.Describe, it spec.S, before, after func(func())) {
+        var obj *myapp.Object
 
-        it.Before(func() {
-            someObject = myapp.NewObject()
+        before(func() {
+            obj = myapp.NewObject(it.Context())
         })
 
-        it.After(func() {
-            someObject.Close()
+        after(func() {
+            obj.Close()
         })
 
-        it("should have some default", func() {
-            if someObject.Default != "value" {
-                t.Error("bad default")
-            }
+        describe("something happens", func() {
+            context("with a temp dir", func() {
+                before(func() {
+                    obj.Dir = it.T().TempDir()
+                })
+
+                it("does the thing", func() {
+                    if err := obj.DoThing(); err != nil {
+                        t.Error(err)
+                    }
+                })
+            })
         })
-
-        when("something happens", func() {
-            it.Before(func() {
-                someObject.Connect()
-            })
-
-            it("should do one thing", func() {
-                if err := someObject.DoThing(); err != nil {
-                    t.Error(err)
-                }
-            })
-
-            it("should do another thing", func() {
-                if result := someObject.DoOtherThing(); result != "good result" {
-                    t.Error("bad result")
-                }
-            })
-        }, spec.Random())
-
-        when("some slow things happen", func() {
-            it("should do one thing in parallel", func() {
-                if result := someObject.DoSlowThing(); result != "good result" {
-                    t.Error("bad result")
-                }
-            })
-
-            it("should do another thing in parallel", func() {
-                if result := someObject.DoOtherSlowThing(); result != "good result" {
-                    t.Error("bad result")
-                }
-            })
-        }, spec.Parallel())
-    }, spec.Report(report.Terminal{}))
+    })
 }
 ```
 
-With less nesting:
-
-```go
-func TestObject(t *testing.T) {
-    spec.Run(t, "object", testObject, spec.Report(report.Terminal{}))
-}
-
-func testObject(t *testing.T, when spec.G, it spec.S) {
-    ...
-}
-```
-
-For focusing/reporting across multiple files in a package:
-
-```go
-var suite spec.Suite
-
-func init() {
-    suite = spec.New("my suite", spec.Report(report.Terminal{}))
-    suite("object", testObject)
-    suite("other object", testOtherObject)
-}
-
-func TestObjects(t *testing.T) {
-	suite.Run(t)
-}
-
-func testObject(t *testing.T, when spec.G, it spec.S) {
-	...
-}
-
-func testOtherObject(t *testing.T, when spec.G, it spec.S) {
-	...
-}
-```
+Everything else -- `Focus`/`Pend`, `Random`/`Reverse`/`Parallel`, `Report`,
+multi-file `Suite`s -- is unchanged from upstream; see [its
+README](https://github.com/sclevine/spec#readme) for those.
