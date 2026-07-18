@@ -20,6 +20,47 @@ the standard library `testing` package. Spec aims to do "one thing right,"
 and does not provide a wide DSL or any functionality outside of test
 organization.
 
+### This fork: extending spec for the current state of Go
+
+This fork (`github.com/woodie/spec`, drop-in at the same import path so it
+can be pulled in via a `replace` directive with no call-site changes) adds a
+small set of features that Go's evolution since spec's original release now
+makes possible, without changing spec's own no-global-state, no-assertions,
+no-reimplemented-`testing` philosophy:
+
+- **`it.Context()`** -- passes through the real `t.Context()` for the running
+  subtest, so specs can pass a `context.Context` to code under test.
+- **`it.T()`** -- passes through the real `*testing.T` for the running
+  subtest, so `Before`/`After` bodies can call `t.TempDir()`, `t.Skip()`, etc.
+  without spec needing to grow assertion or lifecycle features of its own.
+- **`Describe`/`AsContext()`** -- `Describe` is a plain type alias for `G`;
+  `describe.AsContext()` is a no-op method that returns the same `G` under a
+  second name, for RSpec-style `describe`/`context` duality without a second
+  colliding type alias (`Context` was already spoken for by `it.Context()`
+  above).
+- **`Var[T]`** -- a generics-based typed box (`NewVar[T]`, `.Set`, `.Get`) for
+  sharing a value between a `Before` and its sibling `it` blocks without an
+  `interface{}` cast at every read.
+- **`Aliases`/`RunAliased`** -- `Aliases(describe, it)` returns
+  `before, after, context` bound to `it.Before`, `it.After`, and
+  `describe.AsContext()`; `RunAliased` wraps `Run` and passes all five
+  (`describe`, `context`, `it`, `before`, `after`) directly as callback
+  parameters, so no per-file alias line is needed. This works everywhere spec
+  is imported -- it does not require any project-specific setup file (the Ruby
+  equivalent would be `spec_helper.rb`, but Go's lack of implicit/global
+  scoping means the closest analog is a small wrapper function, not a require).
+
+None of the above were possible without generics (`Var[T]`) or without
+`t.Context()` existing on `*testing.T` (`it.Context()`) -- both landed after
+spec's original design. Each is scoped as an independently upstreamable
+addition; see `docs/COWORK.md` for the full reasoning behind each one and
+which existing spec mechanism (the same side-channel `Option` pattern
+`Out()` already used) each is built on.
+
+A companion library, [`github.com/woodie/expect`](https://github.com/woodie/expect),
+provides Gomega-style matchers (`Expect(t, x).To(Equal(y))`) for specs
+written with this fork, without adopting Gomega itself.
+
 ### Features
 
 - Clean, simple syntax
