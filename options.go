@@ -1,6 +1,7 @@
 package spec
 
 import (
+	"context"
 	"io"
 	"testing"
 )
@@ -194,6 +195,8 @@ type config struct {
 	after  bool
 	t      *testing.T
 	out    func(io.Writer)
+	ctx    func(context.Context)
+	realT  func(*testing.T)
 	report Reporter
 }
 
