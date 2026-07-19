@@ -38,7 +38,7 @@ func (n *node) parse(f func(*testing.T, G, S)) Plan {
 		f()
 	}, func(text string, _ func(), opts ...Option) {
 		cfg := options(opts).apply()
-		if cfg.before || cfg.after || cfg.out != nil {
+		if cfg.before || cfg.after || cfg.out != nil || cfg.ctx != nil || cfg.realT != nil {
 			return
 		}
 		n.add(text, cfg, nil)

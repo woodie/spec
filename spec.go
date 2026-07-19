@@ -2,6 +2,7 @@ package spec
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"testing"
 	"time"
@@ -14,6 +15,14 @@ import (
 // Sequential, Random, Reverse, Parallel
 // Local, Global, Flat, Nested
 type G func(text string, f func(), opts ...Option)
+
+// Describe is an alias for G, identical in every way -- it exists only so a
+// suite can name its outermost group func(t, describe Describe, it S) to
+// match the describe/it naming this account uses in Quick and Kotest specs.
+type Describe = G
+
+// AsContext returns g unchanged -- names a local alias (context := describe.AsContext()) for a nested group read as RSpec's context rather than a top-level describe.
+func (g G) AsContext() G { return g }
 
 // Pend skips all specs in the provided group.
 //
@@ -74,6 +83,28 @@ func (s S) Out() io.Writer {
 		}
 	})
 	return out
+}
+
+// Context returns the spec's context.Context (nil outside S), canceled when the spec completes -- see (*testing.T).Context.
+func (s S) Context() context.Context {
+	var ctx context.Context
+	s("", nil, func(c *config) {
+		c.ctx = func(v context.Context) {
+			ctx = v
+		}
+	})
+	return ctx
+}
+
+// T returns the current spec's *testing.T (nil outside S), giving Before/After the TempDir/Setenv/Skip access GinkgoT() gives Ginkgo specs.
+func (s S) T() *testing.T {
+	var t *testing.T
+	s("", nil, func(c *config) {
+		c.realT = func(v *testing.T) {
+			t = v
+		}
+	})
+	return t
 }
 
 // Suite defines a top-level group of specs within a suite.
@@ -238,6 +269,10 @@ func Run(t *testing.T, text string, f func(*testing.T, G, S), opts ...Option) bo
 			switch {
 			case cfg.out != nil:
 				cfg.out(buffer)
+			case cfg.ctx != nil:
+				cfg.ctx(t.Context())
+			case cfg.realT != nil:
+				cfg.realT(t)
 			case cfg.before:
 				hooks.before(f)
 			case cfg.after:
