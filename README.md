@@ -15,9 +15,10 @@ since cross-language naming consistency is worth more now than it was when
 `spec` was written, and upstream looks maintained-but-dormant rather than
 positioned to make that change itself.
 
-**Status:** the rename/addition is planned, not yet shipped -- this
-checkout still behaves exactly like upstream today (`it.Before`/
-`it.After`, no `JustBeforeEach`). See `docs/COWORK.md` for the full
+**Status:** `it.BeforeEach`/`it.AfterEach`/`it.JustBeforeEach` are here.
+`it.Before`/`it.After` still work too -- kept as deprecated aliases so no
+existing consumer breaks -- but `golangci-lint`'s default `staticcheck`
+check will flag them as deprecated. See `docs/COWORK.md` for the full
 reasoning and rollout plan.
 
 Spec is a simple BDD test organizer for Go. It minimally extends the standard
@@ -64,11 +65,11 @@ func TestObject(t *testing.T) {
 
         var someObject *myapp.Object
 
-        it.Before(func() {
+        it.BeforeEach(func() {
             someObject = myapp.NewObject()
         })
 
-        it.After(func() {
+        it.AfterEach(func() {
             someObject.Close()
         })
 
@@ -79,7 +80,7 @@ func TestObject(t *testing.T) {
         })
 
         context("something happens", func() {
-            it.Before(func() {
+            it.BeforeEach(func() {
                 someObject.Connect()
             })
 
@@ -113,9 +114,7 @@ func TestObject(t *testing.T) {
 }
 ```
 
-### `JustBeforeEach` (planned)
-
-Not shipped yet (see **Status** above) -- the target shape, once it is:
+### `JustBeforeEach`
 
 ```go
 spec.Run(t, "Calculator", func(t *testing.T, describe spec.G, it spec.S) {

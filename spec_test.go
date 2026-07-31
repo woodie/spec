@@ -27,26 +27,26 @@ func record(t *testing.T) (s recorder, c func() []string) {
 }
 
 func specTestCases(t *testing.T, when spec.G, it spec.S, s recorder) {
-	it.Before(s(t, "Before"))
-	it.After(s(t, "After"))
+	it.BeforeEach(s(t, "Before"))
+	it.AfterEach(s(t, "After"))
 
 	it("S", s(t, "S"))
 	it.Pend("S.Pend", s(t, "S.Pend"))
 	it.Focus("S.Focus", s(t, "S.Focus"))
 
 	when("G", func() {
-		it.Before(s(t, "G.Before"))
-		it.After(s(t, "G.After"))
+		it.BeforeEach(s(t, "G.Before"))
+		it.AfterEach(s(t, "G.After"))
 		it("G.S", s(t, "G.S"))
 	})
 	when.Pend("G.Pend", func() {
-		it.Before(s(t, "G.Pend.Before"))
-		it.After(s(t, "G.Pend.After"))
+		it.BeforeEach(s(t, "G.Pend.Before"))
+		it.AfterEach(s(t, "G.Pend.After"))
 		it("G.Pend.S", s(t, "G.Pend.S"))
 	})
 	when.Focus("G.Focus", func() {
-		it.Before(s(t, "G.Focus.Before"))
-		it.After(s(t, "G.Focus.After"))
+		it.BeforeEach(s(t, "G.Focus.Before"))
+		it.AfterEach(s(t, "G.Focus.After"))
 		it("G.Focus.S", s(t, "G.Focus.S"))
 	})
 }
@@ -256,15 +256,15 @@ func TestSBefore(t *testing.T) {
 	s, calls := record(t)
 
 	spec.Run(t, "Run", func(t *testing.T, when spec.G, it spec.S) {
-		it.Before(s(t, "Run.Before.1"))
+		it.BeforeEach(s(t, "Run.Before.1"))
 		it("Run.S", s(t, "Run.S"))
-		it.Before(s(t, "Run.Before.2"))
+		it.BeforeEach(s(t, "Run.Before.2"))
 		when("Run.G", func() {
-			it.Before(s(t, "Run.G.Before.1"))
+			it.BeforeEach(s(t, "Run.G.Before.1"))
 			it("Run.G.S", s(t, "Run.G.S"))
-			it.Before(s(t, "Run.G.Before.2"))
+			it.BeforeEach(s(t, "Run.G.Before.2"))
 		})
-		it.Before(s(t, "Run.Before.3"))
+		it.BeforeEach(s(t, "Run.Before.3"))
 	})
 
 	if !reflect.DeepEqual(calls(), []string{
@@ -279,21 +279,48 @@ func TestSBefore(t *testing.T) {
 	}
 }
 
+func TestSJustBeforeEach(t *testing.T) {
+	s, calls := record(t)
+
+	spec.Run(t, "Run", func(t *testing.T, when spec.G, it spec.S) {
+		it.BeforeEach(s(t, "Run.BeforeEach"))
+		it.JustBeforeEach(s(t, "Run.JustBeforeEach"))
+		it("Run.S", s(t, "Run.S"))
+		when("Run.G", func() {
+			it.BeforeEach(s(t, "Run.G.BeforeEach"))
+			it.JustBeforeEach(s(t, "Run.G.JustBeforeEach"))
+			it("Run.G.S", s(t, "Run.G.S"))
+		})
+	})
+
+	if !reflect.DeepEqual(calls(), []string{
+		"Run/Run.S->Run.BeforeEach",
+		"Run/Run.S->Run.JustBeforeEach",
+		"Run/Run.S->Run.S",
+
+		"Run/Run.G/Run.G.S->Run.BeforeEach", "Run/Run.G/Run.G.S->Run.G.BeforeEach",
+		"Run/Run.G/Run.G.S->Run.JustBeforeEach", "Run/Run.G/Run.G.S->Run.G.JustBeforeEach",
+		"Run/Run.G/Run.G.S->Run.G.S",
+	}) {
+		t.Fatal("Incorrect order:", calls())
+	}
+}
+
 func TestSuiteBefore(t *testing.T) {
 	s, calls := record(t)
 
 	suite := spec.New("Suite")
-	suite.Before(func(t *testing.T) {
+	suite.BeforeEach(func(t *testing.T) {
 		s(t, "Before.1")()
 	})
 	suite("Top", func(t *testing.T, when spec.G, it spec.S) {
-		it.Before(s(t, "Top.Before"))
+		it.BeforeEach(s(t, "Top.Before"))
 		when("Top.G", func() {
-			it.Before(s(t, "Top.G.Before"))
+			it.BeforeEach(s(t, "Top.G.Before"))
 			it("Top.G.S", s(t, "Top.G.S"))
 		})
 	})
-	suite.Before(func(t *testing.T) {
+	suite.BeforeEach(func(t *testing.T) {
 		s(t, "Before.2")()
 	})
 	suite.Run(t)
@@ -312,15 +339,15 @@ func TestSAfter(t *testing.T) {
 	s, calls := record(t)
 
 	spec.Run(t, "Run", func(t *testing.T, when spec.G, it spec.S) {
-		it.After(s(t, "Run.After.1"))
+		it.AfterEach(s(t, "Run.After.1"))
 		it("Run.S", s(t, "Run.S"))
-		it.After(s(t, "Run.After.2"))
+		it.AfterEach(s(t, "Run.After.2"))
 		when("Run.G", func() {
-			it.After(s(t, "Run.G.After.1"))
+			it.AfterEach(s(t, "Run.G.After.1"))
 			it("Run.G.S", s(t, "Run.G.S"))
-			it.After(s(t, "Run.G.After.2"))
+			it.AfterEach(s(t, "Run.G.After.2"))
 		})
-		it.After(s(t, "Run.After.3"))
+		it.AfterEach(s(t, "Run.After.3"))
 	})
 
 	if !reflect.DeepEqual(calls(), []string{
@@ -339,17 +366,17 @@ func TestSuiteAfter(t *testing.T) {
 	s, calls := record(t)
 
 	suite := spec.New("Suite")
-	suite.After(func(t *testing.T) {
+	suite.AfterEach(func(t *testing.T) {
 		s(t, "After.1")()
 	})
 	suite("Top", func(t *testing.T, when spec.G, it spec.S) {
-		it.After(s(t, "Top.After"))
+		it.AfterEach(s(t, "Top.After"))
 		when("Top.G", func() {
-			it.After(s(t, "Top.G.After"))
+			it.AfterEach(s(t, "Top.G.After"))
 			it("Top.G.S", s(t, "Top.G.S"))
 		})
 	})
-	suite.After(func(t *testing.T) {
+	suite.AfterEach(func(t *testing.T) {
 		s(t, "After.2")()
 	})
 	suite.Run(t)
@@ -368,13 +395,13 @@ func TestSkipAfter(t *testing.T) {
 	s, calls := record(t)
 
 	spec.Run(t, "Run", func(t *testing.T, when spec.G, it spec.S) {
-		it.Before(func() {
+		it.BeforeEach(func() {
 			s(t, "Run.Before")()
 			t.SkipNow()
 		})
-		it.After(s(t, "Run.After"))
+		it.AfterEach(s(t, "Run.After"))
 		when("Run.G", func() {
-			it.After(s(t, "Run.G.After"))
+			it.AfterEach(s(t, "Run.G.After"))
 			it("Run.G.S", s(t, "Run.G.S"))
 		})
 	})
@@ -392,7 +419,7 @@ func TestSpec(t *testing.T) {
 		when("something happens", func() {
 			var someStr string
 
-			it.Before(func() {
+			it.BeforeEach(func() {
 				t.Log("before")
 				if someStr == "some-value" {
 					t.Fatal("test pollution")
@@ -400,7 +427,7 @@ func TestSpec(t *testing.T) {
 				someStr = "some-value"
 			})
 
-			it.After(func() {
+			it.AfterEach(func() {
 				t.Log("after")
 			})
 
@@ -409,7 +436,7 @@ func TestSpec(t *testing.T) {
 			})
 
 			when("something else also happens", func() {
-				it.Before(func() {
+				it.BeforeEach(func() {
 					t.Log("nested before")
 				})
 
@@ -417,13 +444,13 @@ func TestSpec(t *testing.T) {
 					t.Log("second")
 				})
 
-				it.After(func() {
+				it.AfterEach(func() {
 					t.Log("nested after")
 				})
 			})
 
 			when("some things happen in parallel at the end", func() {
-				it.After(func() {
+				it.AfterEach(func() {
 					t.Log("lone after")
 				})
 
@@ -437,7 +464,7 @@ func TestSpec(t *testing.T) {
 			}, spec.Parallel())
 
 			when("some things happen randomly", func() {
-				it.Before(func() {
+				it.BeforeEach(func() {
 					t.Log("before random")
 				})
 
@@ -451,7 +478,7 @@ func TestSpec(t *testing.T) {
 			}, spec.Random())
 
 			when("some things happen in reverse and in nested subtests", func() {
-				it.Before(func() {
+				it.BeforeEach(func() {
 					t.Log("before reverse")
 				})
 
@@ -465,12 +492,12 @@ func TestSpec(t *testing.T) {
 			}, spec.Reverse(), spec.Nested())
 
 			when("some things happen in globally random order", func() {
-				it.Before(func() {
+				it.BeforeEach(func() {
 					t.Log("before global")
 				})
 
 				when("grouped first", func() {
-					it.Before(func() {
+					it.BeforeEach(func() {
 						t.Log("before group one global")
 					})
 
@@ -484,7 +511,7 @@ func TestSpec(t *testing.T) {
 				})
 
 				when("grouped second", func() {
-					it.Before(func() {
+					it.BeforeEach(func() {
 						t.Log("before group two global")
 					})
 
