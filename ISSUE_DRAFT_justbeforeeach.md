@@ -114,12 +114,22 @@ up this version. Same shape as the `Expect(t, got)` -> `Expect(got, t)`
 break `expect` shipped as `v0.2.0` -- a real, one-time ripple through every
 consumer's test files, done deliberately in one pass rather than left
 half-migrated. Not a reason to avoid the rename, just a real follow-up
-task once this ships: update the alias line to `context, beforeEach,
-afterEach, justBeforeEach := describe, it.BeforeEach, it.AfterEach,
-it.JustBeforeEach` (or keep local lowercase names `before`/`after` if
-that's preferred -- the call sites don't care what the local alias is
-named, only the exported method) across every consumer, confirmed on the
-user's own Mac per consumer, one at a time.
+task once this ships.
+
+The convention itself changes too, not just the names in it. Aliasing all
+three renamed/new methods to bare lowercase locals doesn't hold up --
+`context, beforeEach, afterEach, justBeforeEach := describe, it.BeforeEach,
+it.AfterEach, it.JustBeforeEach` is a genuinely long, cluttered line, and
+abbreviating it (`it.BE`/`it.JBE`) just trades one kind of ugly for
+another. Simpler fix: stop aliasing `it`'s hook methods at all. `it`
+already reads visually distinct from the lowercase `describe`/`context`
+structural vocabulary, so `it.BeforeEach(...)`/`it.AfterEach(...)`/
+`it.JustBeforeEach(...)` called qualified doesn't clash the way a
+qualified `expect.Expect(...)` would. The alias line shrinks back down to
+just `context := describe`, and every consumer's call sites change from
+`before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.) --
+mechanical, but real, across every test file in every consumer, confirmed
+on the user's own Mac per consumer, one at a time.
 
 Happy to turn this into a real PR (with its own spec coverage for
 `JustBeforeEach` and updated coverage for the renamed methods) if that's

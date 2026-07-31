@@ -80,13 +80,29 @@ as the `Expect(t, got)` -> `Expect(got, t)` break `expect` shipped as
 `v0.2.0` -- a real, one-time ripple through every consumer's test files,
 done deliberately in one pass rather than left half-migrated.
 
+**The aliasing convention itself changes too.** Worked through this
+directly: aliasing all three renamed/new methods to bare lowercase locals
+(`context, beforeEach, afterEach, justBeforeEach := describe,
+it.BeforeEach, it.AfterEach, it.JustBeforeEach`) is a genuinely long,
+cluttered line, and abbreviating it (`it.BE`/`it.JBE`) just trades one
+kind of ugly for another. Landed on the simpler fix instead: stop aliasing
+`it`'s hook methods at all. `it` already reads visually distinct from the
+lowercase `describe`/`context` structural vocabulary, so calling
+`it.BeforeEach(...)`/`it.AfterEach(...)`/`it.JustBeforeEach(...)` qualified
+doesn't clash the way a qualified `expect.Expect(...)` would (the reason
+`expect` itself is dot-imported). The alias line shrinks back down to just
+`context := describe`; every consumer's call sites move from
+`before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
+
 Next steps once the issue's filed: implement on a real branch (rename
 plus the new hook), add/update spec coverage, confirm on the user's own
 Mac, then work through each consumer one at a time (`gorderly`, `expect`,
-`humane`, `lambada`) updating the aliasing line and confirming clean --
-same "publish first, then bump each consumer's pin" sequence as any other
-shared-library change, per the cross-project doc's "Shared libraries
-across sibling repos" section. `gorderly`'s own `docs/FRAMEWORK.md` will
-also need its "Why `spec`, not Ginkgo"/"subject pattern" sections updated
-once this ships, since they currently describe the gap this fork is about
-to close.
+`humane`, `lambada`) updating both the aliasing line and every call site,
+confirming clean per consumer -- same "publish first, then bump each
+consumer's pin" sequence as any other shared-library change, per the
+cross-project doc's "Shared libraries across sibling repos" section.
+`gorderly`'s own `docs/FRAMEWORK.md` will also need its "Why `spec`, not
+Ginkgo"/"subject pattern"/"Aliasing `spec`'s structural functions"
+sections updated once this ships, since they currently describe the gap
+this fork is about to close and the aliasing convention this fork is
+about to change.
