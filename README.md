@@ -1,4 +1,4 @@
-# spec (fork)
+# spec ⑂
 
 [![go.mod version](https://img.shields.io/github/go-mod/go-version/woodie/spec)](https://github.com/woodie/spec)
 [![CI](https://github.com/woodie/spec/actions/workflows/ci.yml/badge.svg)](https://github.com/woodie/spec/actions/workflows/ci.yml)
