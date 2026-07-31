@@ -189,3 +189,16 @@ func testOtherObject(t *testing.T, describe spec.G, it spec.S) {
 	...
 }
 ```
+
+## Development
+
+```
+make build    # go build ./... -- spec is a library, nothing to install
+make test     # verbose, dogfoods spec.Run against spec's own suite, piped through gorderly
+make lint     # golangci-lint
+make check    # terse: silent on success, full log on failure
+```
+
+`make test` pipes through [`gorderly`](https://github.com/woodie/gorderly)
+for RSpec-style documentation output; without it installed, run
+`go test -v ./...` or `go test ./...` directly instead.

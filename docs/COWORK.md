@@ -94,6 +94,22 @@ doesn't clash the way a qualified `expect.Expect(...)` would (the reason
 `context := describe`; every consumer's call sites move from
 `before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
 
+## Done: Makefile added (build/lint/test/check)
+
+`spec` had no Makefile at all -- matched `expect`'s shape (a pure library,
+no `main` package, so `build` is a compile-only `go build ./...` sanity
+check, no `install` target) over `humane`'s (which skips `build`
+entirely) since it's slightly more complete and `expect` is `spec`'s
+closest sibling in this pairing. `test` pipes through `gorderly -fd`:
+`spec_test.go` already dogfoods `spec.Run` against `spec` itself, so this
+renders as a real nested tree rather than a flat list. `check` stays
+terse (silent on pass, full log on failure) via plain `go test`, so it
+doesn't depend on `gorderly` being installed. README's new "Development"
+section documents all four targets plus the no-`gorderly` fallback,
+matching every other repo's precedent. No `.golangci.yml` added --
+`expect`/`gorderly` don't have one either, just `golangci-lint run` with
+defaults.
+
 ## Done: README refreshed around this fork's own positioning
 
 Rewrote the opening to point explicitly at
