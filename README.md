@@ -60,8 +60,8 @@ Quick example:
 
 ```go
 func TestObject(t *testing.T) {
-    spec.Run(t, "object", func(t *testing.T, describe spec.G, it spec.S) {
-        context := describe
+    spec.Run(t, "object", func(t *testing.T, context spec.G, it spec.S) {
+        describe := context
 
         var someObject *myapp.Object
 
@@ -97,7 +97,7 @@ func TestObject(t *testing.T) {
             })
         }, spec.Random())
 
-        context("some slow things happen", func() {
+        describe("some slow things happen", func() {
             it("should do one thing in parallel", func() {
                 if result := someObject.DoSlowThing(); result != "good result" {
                     t.Error("bad result")
@@ -117,13 +117,13 @@ func TestObject(t *testing.T) {
 ### `JustBeforeEach`
 
 ```go
-spec.Run(t, "Calculator", func(t *testing.T, describe spec.G, it spec.S) {
-    context := describe
+spec.Run(t, "Calculator", func(t *testing.T, context spec.G, it spec.S) {
+    describe := context
 
     var calculator *Calculator
     it.BeforeEach(func() { calculator = NewCalculator() })
 
-    context("#divide", func() {
+    describe("#divide", func() {
         var numerator, denominator, result int
         it.JustBeforeEach(func() {
             result = calculator.Divide(numerator, denominator)
@@ -165,7 +165,7 @@ func TestObject(t *testing.T) {
     spec.Run(t, "object", testObject, spec.Report(report.Terminal{}))
 }
 
-func testObject(t *testing.T, describe spec.G, it spec.S) {
+func testObject(t *testing.T, context spec.G, it spec.S) {
     ...
 }
 ```
@@ -185,11 +185,11 @@ func TestObjects(t *testing.T) {
 	suite.Run(t)
 }
 
-func testObject(t *testing.T, describe spec.G, it spec.S) {
+func testObject(t *testing.T, context spec.G, it spec.S) {
 	...
 }
 
-func testOtherObject(t *testing.T, describe spec.G, it spec.S) {
+func testOtherObject(t *testing.T, context spec.G, it spec.S) {
 	...
 }
 ```

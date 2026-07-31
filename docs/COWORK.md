@@ -240,3 +240,44 @@ Ginkgo"/"subject pattern"/"Aliasing `spec`'s structural functions"
 sections updated once this ships, since they currently describe the gap
 this fork is about to close and the aliasing convention this fork is
 about to change.
+
+## Done: flipped which word is the base name -- `context` now, not `describe`
+
+Reversed the direction recorded above (`describe` at the top level,
+`context := describe` aliased). Prompted by a real discussion: some
+suites in this account always use `context`, some mix `context` and
+`describe`, matching how the wider RSpec community never settled on one
+rule either (`context` has always been a plain alias for `describe`,
+never a stricter or looser one). One argument for a direction, not a
+requirement: Ginkgo's own source defines `Context` as `var Context =
+Describe` -- `Describe` is the base symbol, `Context` its alias. Since
+this fork deliberately ports Ginkgo's `JustBeforeEach` naming, matching
+Ginkgo's own alias direction rather than inventing a reversed one seemed
+worth doing too. Flipped: the raw `spec.Run`/`spec.G` parameter is now
+named `context`, and `describe := context` is declared only in a suite
+that actually calls `describe(...)` -- e.g. naming the method under test,
+RSpec-style (`describe("#divide", ...)`), with `context` nested inside
+for the conditions that vary.
+
+**Caught before shipping:** the first pass at this flip declared
+`describe := context` in the README's own Quick example and
+`JustBeforeEach` example without ever calling `describe(...)` anywhere in
+either body -- an alias declared and never used, which is not just
+unhelpful documentation, it's a genuine Go compile error (unused local).
+Fixed by giving each example a real reason to use both words: the Quick
+example's "some slow things happen" group became `describe(...)` instead
+of `context(...)` (a distinct capability, not a condition on the same
+object); the `JustBeforeEach` example's `#divide` group became
+`describe(...)` (naming the method under test, exactly the RSpec idiom
+`describe` exists for), with `context("dividing evenly", ...)`/
+`context("dividing with a remainder", ...)` nested inside for the actual
+conditions. General rule going forward, everywhere this convention gets
+documented or written: never declare an alias a suite doesn't call.
+
+Rolled out account-wide in the same pass as the `BeforeEach`/`AfterEach`/
+`JustBeforeEach` consumer bump: `gorderly` (every real file only calls
+`context(...)`, so the alias is dropped entirely, not flipped), `expect`
+and `humane`'s `time_test.go` (both call `describe(...)` for real, alias
+kept), `lambada` (every file across both packages calls `describe(...)`
+for real). See each repo's own `docs/COWORK.md` for the file-by-file
+detail.
