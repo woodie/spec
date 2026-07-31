@@ -6,14 +6,13 @@
 [![License](https://img.shields.io/github/license/woodie/spec.svg)](LICENSE)
 
 This is [`woodie`](https://github.com/woodie)'s fork of
-[`sclevine/spec`](https://github.com/sclevine/spec) -- see
-[upstream's own README](https://github.com/sclevine/spec/blob/master/README.md)
-for the original pitch and history. This fork exists to move `spec`'s hook
-naming into line with what Ginkgo, RSpec, Jest/Mocha, and Kotest already
-call the same three hooks (`BeforeEach`/`AfterEach`/`JustBeforeEach`),
-since cross-language naming consistency is worth more now than it was when
-`spec` was written, and upstream looks maintained-but-dormant rather than
-positioned to make that change itself.
+[`sclevine/spec`](https://github.com/sclevine/spec). This fork exists to
+move `spec`'s hook naming into line with what Ginkgo, RSpec, Jest/Mocha, and
+Kotest already call the same three hooks
+(`BeforeEach`/`AfterEach`/`JustBeforeEach`), since cross-language naming
+consistency is worth more now than it was when `spec` was written, and
+upstream looks maintained-but-dormant rather than positioned to make that
+change itself.
 
 **Status:** `it.BeforeEach`/`it.AfterEach`/`it.JustBeforeEach` are here.
 `it.Before`/`it.After` still work too -- kept as deprecated aliases so no
@@ -52,104 +51,47 @@ organization.
 
 - Use `go test -v` to see individual subtests.
 
-### Examples
+### Example
 
 [Most functionality is demonstrated here.](spec_test.go#L238)
 
-Quick example:
-
 ```go
-func TestObject(t *testing.T) {
-    spec.Run(t, "object", func(t *testing.T, context spec.G, it spec.S) {
+func TestCalculator(t *testing.T) {
+    spec.Run(t, "Calculator", func(t *testing.T, context spec.G, it spec.S) {
         describe := context
 
-        var someObject *myapp.Object
+        var calculator *Calculator
+        it.BeforeEach(func() { calculator = NewCalculator() })
+        it.AfterEach(func() { calculator = nil })
 
-        it.BeforeEach(func() {
-            someObject = myapp.NewObject()
+        describe("#divide", func() {
+            var numerator, denominator, result int
+            it.JustBeforeEach(func() {
+                result = calculator.Divide(numerator, denominator)
+            })
+
+            context("dividing evenly", func() {
+                it.BeforeEach(func() { numerator, denominator = 10, 2 })
+
+                it("returns the quotient", func() {
+                    if result != 5 {
+                        t.Error("expected 5")
+                    }
+                })
+            })
+
+            context("dividing with a remainder", func() {
+                it.BeforeEach(func() { numerator, denominator = 7, 2 })
+
+                it("truncates toward zero", func() {
+                    if result != 3 {
+                        t.Error("expected 3")
+                    }
+                })
+            })
         })
-
-        it.AfterEach(func() {
-            someObject.Close()
-        })
-
-        it("should have some default", func() {
-            if someObject.Default != "value" {
-                t.Error("bad default")
-            }
-        })
-
-        context("something happens", func() {
-            it.BeforeEach(func() {
-                someObject.Connect()
-            })
-
-            it("should do one thing", func() {
-                if err := someObject.DoThing(); err != nil {
-                    t.Error(err)
-                }
-            })
-
-            it("should do another thing", func() {
-                if result := someObject.DoOtherThing(); result != "good result" {
-                    t.Error("bad result")
-                }
-            })
-        }, spec.Random())
-
-        describe("some slow things happen", func() {
-            it("should do one thing in parallel", func() {
-                if result := someObject.DoSlowThing(); result != "good result" {
-                    t.Error("bad result")
-                }
-            })
-
-            it("should do another thing in parallel", func() {
-                if result := someObject.DoOtherSlowThing(); result != "good result" {
-                    t.Error("bad result")
-                }
-            })
-        }, spec.Parallel())
     }, spec.Report(report.Terminal{}))
 }
-```
-
-### `JustBeforeEach`
-
-```go
-spec.Run(t, "Calculator", func(t *testing.T, context spec.G, it spec.S) {
-    describe := context
-
-    var calculator *Calculator
-    it.BeforeEach(func() { calculator = NewCalculator() })
-
-    describe("#divide", func() {
-        var numerator, denominator, result int
-        it.JustBeforeEach(func() {
-            result = calculator.Divide(numerator, denominator)
-        })
-
-        context("dividing evenly", func() {
-            it.BeforeEach(func() { numerator, denominator = 10, 2 })
-
-            it("returns the quotient", func() {
-                if result != 5 {
-                    t.Error("expected 5")
-                }
-            })
-        })
-
-        context("dividing with a remainder", func() {
-            it.BeforeEach(func() { numerator, denominator = 7, 2 })
-
-            it("truncates toward zero", func() {
-                if result != 3 {
-                    t.Error("expected 3")
-                }
-            })
-        })
-    })
-})
 ```
 
 `it.JustBeforeEach` runs after every `it.BeforeEach` at every nesting
