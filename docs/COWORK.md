@@ -94,6 +94,29 @@ doesn't clash the way a qualified `expect.Expect(...)` would (the reason
 `context := describe`; every consumer's call sites move from
 `before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
 
+## Done: real CI, badges, dropped Travis
+
+Added `.github/workflows/ci.yml` (checkout, setup-go pinned to `1.24` --
+matching `go.mod`'s directive -- build, test) on push/PR to `master`
+(this fork's actual default branch, not `main`), matching `expect`'s/
+`gorderly`'s own `ci.yml` shape. Removed `.travis.yml` -- Travis CI is
+effectively dead for a repo like this, and keeping it around next to a
+real, working GitHub Actions workflow just invites confusion about which
+one is authoritative.
+
+README badges added: go.mod version, CI, Release (`v0.1.0` is already
+tagged on `woodie/spec` from the earlier abandoned fork attempt), License.
+Deliberately did **not** add a Go Reference/pkg.go.dev badge -- `go.mod`
+still declares `module github.com/sclevine/spec` (unchanged from
+upstream), so pkg.go.dev indexes this fork's code under upstream's own
+module path, not `github.com/woodie/spec`. A badge pointing at either path
+would be misleading: `github.com/woodie/spec` has nothing published to
+pkg.go.dev under that path, and `github.com/sclevine/spec` shows
+upstream's docs, not this fork's actual (soon-to-be-renamed) API. Whether
+to ever rename the module path itself to `github.com/woodie/spec` is a
+real open question -- bigger than this session's scope, and orthogonal to
+the `Before`/`After` rename -- flagged here rather than decided.
+
 ## Done: first `make check` run, real lint fixes
 
 First `make check` on the user's own Mac surfaced 5 real `golangci-lint`

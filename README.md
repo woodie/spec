@@ -1,5 +1,10 @@
 # spec (fork)
 
+[![go.mod version](https://img.shields.io/github/go-mod/go-version/woodie/spec)](https://github.com/woodie/spec)
+[![CI](https://github.com/woodie/spec/actions/workflows/ci.yml/badge.svg)](https://github.com/woodie/spec/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/woodie/spec.svg)](https://github.com/woodie/spec/releases/latest)
+[![License](https://img.shields.io/github/license/woodie/spec.svg)](LICENSE)
+
 This is [`woodie`](https://github.com/woodie)'s fork of
 [`sclevine/spec`](https://github.com/sclevine/spec) -- see
 [upstream's own README](https://github.com/sclevine/spec/blob/master/README.md)
