@@ -1,4 +1,4 @@
-# spec (woodie's fork)
+# spec (fork)
 
 This is [`woodie`](https://github.com/woodie)'s fork of
 [`sclevine/spec`](https://github.com/sclevine/spec) -- see
@@ -107,6 +107,52 @@ func TestObject(t *testing.T) {
     }, spec.Report(report.Terminal{}))
 }
 ```
+
+### `JustBeforeEach` (planned)
+
+Not shipped yet (see **Status** above) -- the target shape, once it is:
+
+```go
+spec.Run(t, "Calculator", func(t *testing.T, describe spec.G, it spec.S) {
+    context := describe
+
+    var calculator *Calculator
+    it.BeforeEach(func() { calculator = NewCalculator() })
+
+    context("#divide", func() {
+        var numerator, denominator, result int
+        it.JustBeforeEach(func() {
+            result = calculator.Divide(numerator, denominator)
+        })
+
+        context("dividing evenly", func() {
+            it.BeforeEach(func() { numerator, denominator = 10, 2 })
+
+            it("returns the quotient", func() {
+                if result != 5 {
+                    t.Error("expected 5")
+                }
+            })
+        })
+
+        context("dividing with a remainder", func() {
+            it.BeforeEach(func() { numerator, denominator = 7, 2 })
+
+            it("truncates toward zero", func() {
+                if result != 3 {
+                    t.Error("expected 3")
+                }
+            })
+        })
+    })
+})
+```
+
+`it.JustBeforeEach` runs after every `it.BeforeEach` at every nesting
+level, immediately before the test itself -- so `numerator`/`denominator`
+are always set before `calculator.Divide` runs, and each `context` only
+states what's different about its own inputs. Same shape as Ginkgo's
+`JustBeforeEach`; see `docs/COWORK.md` for the full reasoning.
 
 With less nesting:
 
