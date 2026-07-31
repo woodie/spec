@@ -1,7 +1,19 @@
-# spec
+# spec (woodie's fork)
 
-[![Build Status](https://travis-ci.org/sclevine/spec.svg?branch=master)](https://travis-ci.org/sclevine/spec)
-[![GoDoc](https://godoc.org/github.com/sclevine/spec?status.svg)](https://godoc.org/github.com/sclevine/spec)
+This is [`woodie`](https://github.com/woodie)'s fork of
+[`sclevine/spec`](https://github.com/sclevine/spec) -- see
+[upstream's own README](https://github.com/sclevine/spec/blob/master/README.md)
+for the original pitch and history. This fork exists to move `spec`'s hook
+naming into line with what Ginkgo, RSpec, Jest/Mocha, and Kotest already
+call the same three hooks (`BeforeEach`/`AfterEach`/`JustBeforeEach`),
+since cross-language naming consistency is worth more now than it was when
+`spec` was written, and upstream looks maintained-but-dormant rather than
+positioned to make that change itself.
+
+**Status:** the rename/addition is planned, not yet shipped -- this
+checkout still behaves exactly like upstream today (`it.Before`/
+`it.After`, no `JustBeforeEach`). See `docs/COWORK.md` for the full
+reasoning and rollout plan.
 
 Spec is a simple BDD test organizer for Go. It minimally extends the standard
 library `testing` package by facilitating easy organization of Go 1.7+
@@ -103,7 +115,7 @@ func TestObject(t *testing.T) {
     spec.Run(t, "object", testObject, spec.Report(report.Terminal{}))
 }
 
-func testObject(t *testing.T, when spec.G, it spec.S) {
+func testObject(t *testing.T, describe spec.G, it spec.S) {
     ...
 }
 ```
@@ -123,11 +135,11 @@ func TestObjects(t *testing.T) {
 	suite.Run(t)
 }
 
-func testObject(t *testing.T, when spec.G, it spec.S) {
+func testObject(t *testing.T, describe spec.G, it spec.S) {
 	...
 }
 
-func testOtherObject(t *testing.T, when spec.G, it spec.S) {
+func testOtherObject(t *testing.T, describe spec.G, it spec.S) {
 	...
 }
 ```

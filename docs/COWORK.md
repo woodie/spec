@@ -94,6 +94,21 @@ doesn't clash the way a qualified `expect.Expect(...)` would (the reason
 `context := describe`; every consumer's call sites move from
 `before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
 
+## Done: README refreshed around this fork's own positioning
+
+Rewrote the opening to point explicitly at
+[upstream's own README](https://github.com/sclevine/spec/blob/master/README.md)
+and state directly why this fork exists (naming consistency, upstream
+dormancy) and its current status (rename/`JustBeforeEach` planned, not
+shipped -- this checkout still behaves exactly like upstream today).
+Dropped the Travis/GoDoc badges -- both pointed at upstream's own
+`sclevine/spec` CI/pkg.go.dev entries, not this fork's, so they were
+misleading rather than just stale. No CI configured on this fork yet
+(only the old `.travis.yml`, and Travis itself is effectively dead for
+projects like this); worth a real GitHub Actions workflow (matching
+`gorderly`'s/`expect`'s own `ci.yml` shape) once there's real code to test
+against, not before.
+
 ## Done: README example renamed `when` -> `describe`/`context`
 
 Separate from the rename above, and no code change at all --
