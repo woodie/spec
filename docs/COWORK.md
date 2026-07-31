@@ -29,18 +29,34 @@ Issues are now enabled on this fork
 so feature work can be filed and tracked here directly instead of waiting
 on upstream.
 
-## Planned: rename to `BeforeEach`/`AfterEach`, add `JustBeforeEach` -- breaking, deliberately
+## Implemented: `BeforeEach`/`AfterEach`/`JustBeforeEach`, with `Before`/`After` kept as deprecated aliases
 
-Decided directly: this fork will make a real breaking change, not just add
-a feature. `Before`/`After` become `BeforeEach`/`AfterEach` (the old names
-removed outright, not kept as deprecated shims), and a new
-`JustBeforeEach` is added alongside them -- matching what Ginkgo, RSpec,
-Jest/Mocha, and Kotest already call the same three hooks. Rationale,
-stated directly: cross-language naming consistency is worth more now than
-it was when `spec` was written seven years ago, and a compile-time break
-(the old method just doesn't exist) is better than a runtime-panic
-deprecation shim -- it surfaces every call site immediately at build time
-instead of waiting for that specific test to run.
+Original plan (recorded below, then reversed mid-implementation): a real
+breaking change, `Before`/`After` removed outright in favor of
+`BeforeEach`/`AfterEach`, plus a new `JustBeforeEach` -- matching what
+Ginkgo, RSpec, Jest/Mocha, and Kotest already call the same three hooks.
+
+Reversed directly, mid-implementation, once the actual fallout became
+concrete: a hard break makes this fork painful to adopt for anyone not
+already planning a coordinated migration across every consumer at once --
+including, potentially, upstream itself, if `sclevine` ever wants to pull
+this back in. Landed on the softer version instead: `BeforeEach`/
+`AfterEach`/`JustBeforeEach` are the real, documented names now, but
+`Before`/`After` (on both `S` and `Suite`) stay as thin aliases that just
+call the `Each`-suffixed versions, marked with the standard Go
+`// Deprecated:` godoc comment. This doesn't just sit there silently --
+`staticcheck`'s `SA1019` check (part of `golangci-lint`'s default linter
+set already used by this repo's own `make lint`/`make check`, nothing
+extra to configure) fails on any `it.Before(...)`/`it.After(...)` call
+site, and gopls/most IDEs render the deprecated symbol with a
+strikethrough. That gets every consumer the same "you need to look at
+this" signal a compile error would, just via lint instead of the
+compiler, and lets each one migrate on its own schedule instead of all at
+once in lockstep with this fork's release.
+
+Rationale for the original (now-reversed) breaking-change framing, kept
+here since the underlying naming argument didn't change, only the
+migration mechanism:
 
 Why each piece:
 
@@ -66,19 +82,25 @@ Drafted a real issue (`ISSUE_DRAFT_justbeforeeach.md` in this repo's root,
 not yet filed) covering both the rename and the new hook together, with a
 concrete implementation shape sketched against `spec.go`'s actual hook
 mechanism (the `specHooks`/`specHook` linked list, built via
-`hooks.next()`, run via `specHooks.run`). Not yet filed, not yet
-implemented, not yet confirmed against a real Go toolchain (no Go in this
-sandbox -- see `~/workspace/woodie/docs/COWORK.md`'s "Working on
-unfamiliar stacks").
+`hooks.next()`, run via `specHooks.run`). Updated to reflect the
+deprecated-alias approach once that decision landed. Implemented on the
+`beforeeach-justbeforeeach` feature branch (see below), not yet confirmed
+against a real Go toolchain (no Go in this sandbox -- see
+`~/workspace/woodie/docs/COWORK.md`'s "Working on unfamiliar stacks").
 
 **Fallout, named up front, not a surprise for later:** every consumer in
 this account that aliases `it.Before`/`it.After` (`gorderly`, `expect`,
 `humane`, `lambada` -- the `context, before, after := describe, it.Before,
-it.After` line documented in `gorderly`'s own `docs/FRAMEWORK.md`) breaks
-at compile time the moment its `go.mod` picks up this version. Same shape
-as the `Expect(t, got)` -> `Expect(got, t)` break `expect` shipped as
-`v0.2.0` -- a real, one-time ripple through every consumer's test files,
-done deliberately in one pass rather than left half-migrated.
+it.After` line documented in `gorderly`'s own `docs/FRAMEWORK.md`) keeps
+compiling and passing `go test` the moment its `go.mod` picks up this
+version -- `Before`/`After` are deprecated, not removed. What actually
+changes for those consumers is `make check`/`make lint`: `staticcheck`'s
+SA1019 (part of `golangci-lint`'s default set already, no config needed)
+starts flagging every `it.Before(...)`/`it.After(...)` call site as
+deprecated-symbol usage. Unlike the `Expect(t, got)` -> `Expect(got, t)`
+break `expect` shipped as `v0.2.0` (a real compile break, forced all at
+once), this is a lint signal each consumer can act on at its own pace --
+still real follow-up work once this ships, just not a blocking one.
 
 **The aliasing convention itself changes too.** Worked through this
 directly: aliasing all three renamed/new methods to bare lowercase locals
@@ -93,6 +115,17 @@ doesn't clash the way a qualified `expect.Expect(...)` would (the reason
 `expect` itself is dot-imported). The alias line shrinks back down to just
 `context := describe`; every consumer's call sites move from
 `before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
+
+## Done: implemented on a feature branch, not `master`
+
+Implementation work (the actual `spec.go`/`options.go`/`parser.go`
+changes) happens on a `beforeeach-justbeforeeach` branch, merged back to
+`master` via a pull request rather than committed directly -- decided
+directly once real code was in flight, since nothing else depends on
+`master` yet and a PR gives a normal review/CI-gate point before this
+lands, same as any other repo in this account. `gh pr create` needs to run
+from the user's own Mac (no `gh`/network access in this sandbox), same
+handoff pattern as `gh issue create` for the drafted issue above.
 
 ## Done: real CI, badges, dropped Travis
 

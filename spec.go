@@ -37,14 +37,39 @@ func (g G) Focus(text string, f func(), opts ...Option) {
 // Valid Options: Parallel
 type S func(text string, f func(), opts ...Option)
 
-// Before runs a function before each spec in the group.
-func (s S) Before(f func()) {
+// BeforeEach runs a function before each spec in the group.
+func (s S) BeforeEach(f func()) {
 	s("", f, func(c *config) { c.before = true })
 }
 
-// After runs a function after each spec in the group.
-func (s S) After(f func()) {
+// AfterEach runs a function after each spec in the group.
+func (s S) AfterEach(f func()) {
 	s("", f, func(c *config) { c.after = true })
+}
+
+// Before runs a function before each spec in the group.
+//
+// Deprecated: use BeforeEach instead. Before is kept as an alias so existing
+// call sites keep compiling; it will be removed in a future major version.
+func (s S) Before(f func()) {
+	s.BeforeEach(f)
+}
+
+// After runs a function after each spec in the group.
+//
+// Deprecated: use AfterEach instead. After is kept as an alias so existing
+// call sites keep compiling; it will be removed in a future major version.
+func (s S) After(f func()) {
+	s.AfterEach(f)
+}
+
+// JustBeforeEach runs a function after every BeforeEach at every nesting
+// level has run, immediately before the spec itself. It separates what
+// varies (declared via an ordinary BeforeEach in each nested group) from
+// the action under test (declared once, in a parent) -- the same role
+// Ginkgo's JustBeforeEach plays.
+func (s S) JustBeforeEach(f func()) {
+	s("", f, func(c *config) { c.justBefore = true })
 }
 
 // Pend skips the provided spec.
@@ -85,20 +110,36 @@ func (s S) Out() io.Writer {
 // Local, Global, Flat, Nested
 type Suite func(text string, f func(*testing.T, G, S), opts ...Option) bool
 
-// Before runs a function before each spec in the suite.
-func (s Suite) Before(f func(*testing.T)) bool {
+// BeforeEach runs a function before each spec in the suite.
+func (s Suite) BeforeEach(f func(*testing.T)) bool {
 	return s("", func(t *testing.T, _ G, _ S) {
 		t.Helper()
 		f(t)
 	}, func(c *config) { c.before = true })
 }
 
-// After runs a function after each spec in the suite.
-func (s Suite) After(f func(*testing.T)) bool {
+// AfterEach runs a function after each spec in the suite.
+func (s Suite) AfterEach(f func(*testing.T)) bool {
 	return s("", func(t *testing.T, _ G, _ S) {
 		t.Helper()
 		f(t)
 	}, func(c *config) { c.after = true })
+}
+
+// Before runs a function before each spec in the suite.
+//
+// Deprecated: use BeforeEach instead. Before is kept as an alias so existing
+// call sites keep compiling; it will be removed in a future major version.
+func (s Suite) Before(f func(*testing.T)) bool {
+	return s.BeforeEach(f)
+}
+
+// After runs a function after each spec in the suite.
+//
+// Deprecated: use AfterEach instead. After is kept as an alias so existing
+// call sites keep compiling; it will be removed in a future major version.
+func (s Suite) After(f func(*testing.T)) bool {
+	return s.AfterEach(f)
 }
 
 // Pend skips the provided top-level group of specs.
@@ -242,6 +283,8 @@ func Run(t *testing.T, text string, f func(*testing.T, G, S), opts ...Option) bo
 				hooks.before(f)
 			case cfg.after:
 				hooks.after(f)
+			case cfg.justBefore:
+				hooks.justBefore(f)
 			case spec != nil:
 			case len(n.loc) > 1, n.loc[0] > 0:
 				n.loc[0]--
@@ -263,8 +306,8 @@ type specHooks struct {
 }
 
 type specHook struct {
-	before, after []func()
-	next          *specHook
+	before, after, justBefore []func()
+	next                      *specHook
 }
 
 func newHooks() specHooks {
@@ -274,10 +317,13 @@ func newHooks() specHooks {
 
 func (s specHooks) run(t *testing.T, spec func()) {
 	t.Helper()
+	var justBefores []func()
 	for h := s.first; h != nil; h = h.next {
 		defer run(t, h.after...)
 		run(t, h.before...)
+		justBefores = append(justBefores, h.justBefore...)
 	}
+	run(t, justBefores...)
 	run(t, spec)
 }
 
@@ -287,6 +333,10 @@ func (s specHooks) before(f func()) {
 
 func (s specHooks) after(f func()) {
 	s.last.after = append(s.last.after, f)
+}
+
+func (s specHooks) justBefore(f func()) {
+	s.last.justBefore = append(s.last.justBefore, f)
 }
 
 func (s *specHooks) next() {

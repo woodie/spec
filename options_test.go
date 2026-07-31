@@ -14,12 +14,12 @@ func optionTestSpec(t *testing.T, it spec.S, s recorder, name string) {
 	if name != "" {
 		name += "."
 	}
-	it.Before(s(t, name+"Before.1"))
-	it.Before(s(t, name+"Before.2"))
-	it.Before(s(t, name+"Before.3"))
-	it.After(s(t, name+"After.1"))
-	it.After(s(t, name+"After.2"))
-	it.After(s(t, name+"After.3"))
+	it.BeforeEach(s(t, name+"Before.1"))
+	it.BeforeEach(s(t, name+"Before.2"))
+	it.BeforeEach(s(t, name+"Before.3"))
+	it.AfterEach(s(t, name+"After.1"))
+	it.AfterEach(s(t, name+"After.2"))
+	it.AfterEach(s(t, name+"After.3"))
 	it(name+"S", s(t, name+"S"))
 }
 

@@ -1,13 +1,12 @@
-**Breaking change, intentionally.** This fork is free to make a clean
-break from upstream naming where it's worth it -- and cross-language
-naming consistency is worth more now than it was when `spec` was written:
-`Before`/`After` become `BeforeEach`/`AfterEach`, and a new
-`JustBeforeEach` is added alongside them. All three names match what
+**Add `BeforeEach`/`AfterEach`/`JustBeforeEach`, deprecate `Before`/`After`.**
+Cross-language naming consistency is worth more now than it was when
+`spec` was written: `Before`/`After` gain `BeforeEach`/`AfterEach` as their
+real names, and a new `JustBeforeEach` joins them. All three match what
 Ginkgo, RSpec, Jest/Mocha, and Kotest already call the same three hooks,
 so porting a suite (or a person's mental model) between languages stops
 requiring a translation table.
 
-## Rename: `Before`/`After` -> `BeforeEach`/`AfterEach`
+## Rename: `Before`/`After` -> `BeforeEach`/`AfterEach` (old names kept, deprecated)
 
 `S.Before`/`S.After` (and `Suite.Before`/`Suite.After`) already run
 "before/after each spec in the group/suite" per their own godoc comments
@@ -17,8 +16,10 @@ own "does not reuse any closures between test runs" principle -- there's
 no `BeforeAll`/`BeforeSuite`-style hook to confuse `Before` with). The
 behavior's already right; the name just doesn't say so, and every other
 BDD-style framework uses the "Each" suffix specifically to promise "reruns
-every time, nothing shared." Renaming closes that gap outright instead of
-leaving a same-meaning-different-name alias around indefinitely:
+every time, nothing shared."
+
+Rather than remove `Before`/`After` outright, they stay as thin deprecated
+aliases:
 
 ```go
 // BeforeEach runs a function before each spec in the group.
@@ -30,18 +31,42 @@ func (s S) BeforeEach(f func()) {
 func (s S) AfterEach(f func()) {
     s("", f, func(c *config) { c.after = true })
 }
+
+// Before runs a function before each spec in the group.
+//
+// Deprecated: use BeforeEach instead. Before is kept as an alias so
+// existing call sites keep compiling; it will be removed in a future
+// major version.
+func (s S) Before(f func()) {
+    s.BeforeEach(f)
+}
+
+// After runs a function after each spec in the group.
+//
+// Deprecated: use AfterEach instead. After is kept as an alias so
+// existing call sites keep compiling; it will be removed in a future
+// major version.
+func (s S) After(f func()) {
+    s.AfterEach(f)
+}
 ```
 
-(Same shape for `Suite.BeforeEach`/`Suite.AfterEach`.)
+(Same shape for `Suite.BeforeEach`/`Suite.AfterEach`, with `Suite.Before`/
+`Suite.After` kept as the same style of deprecated alias.)
 
-This is a real breaking change: every existing `it.Before(...)`/
-`it.After(...)` call site stops compiling. That's deliberate -- a
-compile-time break (the old method simply doesn't exist anymore) is
-better than keeping `Before`/`After` around as deprecated shims that panic
-at runtime, since it surfaces every call site immediately, at build time,
-with the compiler pointing at the exact line, rather than waiting for that
-specific test to execute. No migration shim, no permanent dead code kept
-around just to fail loudly later.
+No consumer's build breaks the moment it picks up this version. The
+standard `// Deprecated:` godoc comment is enough to surface the old names
+as a real warning without a runtime shim or a compile break: gopls/most
+IDEs render deprecated symbols with a strikethrough, and `staticcheck`'s
+`SA1019` check -- part of `golangci-lint`'s default linter set, so nothing
+extra to configure -- fails `make check`/`make lint` wherever `it.Before`/
+`it.After` are still called. That gets every call site the same "you need
+to look at this" signal a compile error would, just via lint instead of
+the compiler, and leaves each consumer free to migrate on its own
+schedule rather than all at once. Chosen over a hard break specifically
+because a real break would make this fork painful to adopt for anyone not
+already planning a coordinated migration -- including, potentially,
+upstream itself, if `sclevine` ever wants to pull this back in.
 
 ## New: `JustBeforeEach`
 
@@ -109,12 +134,15 @@ the linked list built via `hooks.next()` as the tree is walked, run via
 Every consumer in this account that aliases `it.Before`/`it.After`
 (`gorderly`, `expect`, `humane`, `lambada` -- the `context, before, after
 := describe, it.Before, it.After` line documented in `gorderly`'s own
-`docs/FRAMEWORK.md`) breaks at compile time the moment its `go.mod` picks
-up this version. Same shape as the `Expect(t, got)` -> `Expect(got, t)`
-break `expect` shipped as `v0.2.0` -- a real, one-time ripple through every
-consumer's test files, done deliberately in one pass rather than left
-half-migrated. Not a reason to avoid the rename, just a real follow-up
-task once this ships.
+`docs/FRAMEWORK.md`) keeps compiling and passing `go test` the moment its
+`go.mod` picks up this version -- `Before`/`After` are still there, just
+deprecated. What changes is `make check`/`make lint`: `staticcheck`'s
+SA1019 starts flagging every `it.Before(...)`/`it.After(...)` call site as
+deprecated-symbol usage, the same way it already flags any other
+deprecated stdlib or third-party API. Unlike the `Expect(t, got)` ->
+`Expect(got, t)` break `expect` shipped as `v0.2.0` (a real compile
+break), this is a lint signal each consumer can act on at its own pace --
+still a real follow-up task once this ships, just not a blocking one.
 
 The convention itself changes too, not just the names in it. Aliasing all
 three renamed/new methods to bare lowercase locals doesn't hold up --

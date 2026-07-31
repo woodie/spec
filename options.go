@@ -184,17 +184,18 @@ func defaultZero64(next, last int64) int64 {
 }
 
 type config struct {
-	seed   int64
-	order  order
-	scope  scope
-	nest   nest
-	pend   bool
-	focus  bool
-	before bool
-	after  bool
-	t      *testing.T
-	out    func(io.Writer)
-	report Reporter
+	seed       int64
+	order      order
+	scope      scope
+	nest       nest
+	pend       bool
+	focus      bool
+	before     bool
+	after      bool
+	justBefore bool
+	t          *testing.T
+	out        func(io.Writer)
+	report     Reporter
 }
 
 type options []Option
