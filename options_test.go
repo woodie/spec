@@ -2,7 +2,7 @@ package spec_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"reflect"
 	"regexp"
 	"testing"
@@ -92,10 +92,10 @@ func TestReport(t *testing.T) {
 	suite("Top", func(t *testing.T, when spec.G, it spec.S) {
 		when("Top.G.Out", func() {
 			it("Top.G.Out.1", func() {
-				fmt.Fprint(it.Out(), "Top.G.Out.1")
+				_, _ = fmt.Fprint(it.Out(), "Top.G.Out.1")
 			})
 			it("Top.G.Out.2", func() {
-				fmt.Fprint(it.Out(), "Top.G.Out.2")
+				_, _ = fmt.Fprint(it.Out(), "Top.G.Out.2")
 			})
 		}, spec.Reverse())
 		optionTestCases(t, when, it, s)
@@ -123,15 +123,15 @@ func TestReport(t *testing.T) {
 		t.Fatal("Incorrect plan:", reporter.StartPlan)
 	}
 
-	out2, err := ioutil.ReadAll(reporter.SpecOrder[0].Out)
+	out2, err := io.ReadAll(reporter.SpecOrder[0].Out)
 	if string(out2) != "Top.G.Out.2" || err != nil {
 		t.Fatal("Incorrect output for Top.G.Out.2 buffer.")
 	}
-	out1, err := ioutil.ReadAll(reporter.SpecOrder[1].Out)
+	out1, err := io.ReadAll(reporter.SpecOrder[1].Out)
 	if string(out1) != "Top.G.Out.1" || err != nil {
 		t.Fatal("Incorrect output for Top.G.Out.1 buffer.")
 	}
-	empty, err := ioutil.ReadAll(reporter.SpecOrder[2].Out)
+	empty, err := io.ReadAll(reporter.SpecOrder[2].Out)
 	if string(empty) != "" || err != nil {
 		t.Fatal("Incorrect output for empty buffer.")
 	}

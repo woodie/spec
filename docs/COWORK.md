@@ -94,6 +94,33 @@ doesn't clash the way a qualified `expect.Expect(...)` would (the reason
 `context := describe`; every consumer's call sites move from
 `before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
 
+## Done: first `make check` run, real lint fixes
+
+First `make check` on the user's own Mac surfaced 5 real `golangci-lint`
+issues, none related to the Makefile itself -- pre-existing debt the repo
+never had lint coverage to catch before:
+
+- Two `errcheck` hits in `options_test.go`: `fmt.Fprint(it.Out(), ...)`
+  calls with unchecked return values. Fixed with `_, _ = fmt.Fprint(...)`,
+  matching the established convention elsewhere in this account (e.g.
+  `gorderly`'s `v0.3.0`/`v0.3.1` errcheck fix).
+- Three `govet` "inline" warnings: `ioutil.ReadAll` (declared using
+  go1.26.2, the installed toolchain) couldn't be inlined into files
+  declaring `go 1.13` (`options_test.go`, `report/log.go`,
+  `report/terminal.go`) -- a real gap between this module's 2019-era `go`
+  directive and every sibling repo's (`expect`/`gorderly`/`humane` all
+  sit at `go 1.24`/`1.25.0`). Fixed at the root rather than papered over:
+  replaced every `ioutil.ReadAll` call with `io.ReadAll` (the modern,
+  non-deprecated equivalent -- `io/ioutil`'s version is just a thin
+  wrapper around it and has been deprecated since Go 1.16), dropping the
+  `io/ioutil` import entirely. Also bumped `go.mod`'s `go` directive from
+  `1.13` to `1.24`, matching this account's other Go repos, per
+  `~/workspace/woodie/docs/COWORK.md`'s "Go version policy: target
+  current Go, don't preserve legacy compatibility."
+
+Made by inspection only, no Go toolchain in this sandbox -- needs a real
+`make check` on the user's Mac to confirm clean.
+
 ## Done: Makefile added (build/lint/test/check)
 
 `spec` had no Makefile at all -- matched `expect`'s shape (a pure library,
