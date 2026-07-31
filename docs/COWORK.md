@@ -94,6 +94,26 @@ doesn't clash the way a qualified `expect.Expect(...)` would (the reason
 `context := describe`; every consumer's call sites move from
 `before(func() { ... })` to `it.BeforeEach(func() { ... })` (etc.).
 
+## Done: README example renamed `when` -> `describe`/`context`
+
+Separate from the rename above, and no code change at all --
+`spec.G`/`spec.S` are just function types, upstream never tied any
+naming to them beyond the example. Upstream's own README named the group
+parameter `when` (`func(t *testing.T, when spec.G, it spec.S)`), which
+never matched this account's actual convention (`describe` at the top
+level, `context := describe` aliased for nested groups, documented in
+every consumer's own `docs/FRAMEWORK.md`). Updated the fork's README
+example directly to `describe`/`context` so the fork's own docs describe
+how this account actually writes `spec` suites, not upstream's original
+naming. Left `it.Before`/`it.After` as-is in that same example for now,
+since the rename above hasn't shipped yet -- update this example to
+`it.BeforeEach`/`it.AfterEach` in the same pass that implements the
+rename, so the README never describes a method that doesn't exist yet.
+`spec_test.go`/`options_test.go` (upstream's own test suite) still use
+`when` -- left untouched for now, since rewriting real test code is a
+bigger, riskier change than a README example; worth a separate pass if
+wanted.
+
 Next steps once the issue's filed: implement on a real branch (rename
 plus the new hook), add/update spec coverage, confirm on the user's own
 Mac, then work through each consumer one at a time (`gorderly`, `expect`,

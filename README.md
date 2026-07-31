@@ -42,7 +42,9 @@ Quick example:
 
 ```go
 func TestObject(t *testing.T) {
-    spec.Run(t, "object", func(t *testing.T, when spec.G, it spec.S) {
+    spec.Run(t, "object", func(t *testing.T, describe spec.G, it spec.S) {
+        context := describe
+
         var someObject *myapp.Object
 
         it.Before(func() {
@@ -59,7 +61,7 @@ func TestObject(t *testing.T) {
             }
         })
 
-        when("something happens", func() {
+        context("something happens", func() {
             it.Before(func() {
                 someObject.Connect()
             })
@@ -77,7 +79,7 @@ func TestObject(t *testing.T) {
             })
         }, spec.Random())
 
-        when("some slow things happen", func() {
+        context("some slow things happen", func() {
             it("should do one thing in parallel", func() {
                 if result := someObject.DoSlowThing(); result != "good result" {
                     t.Error("bad result")
