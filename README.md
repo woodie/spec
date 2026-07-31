@@ -202,3 +202,11 @@ make check    # terse: silent on success, full log on failure
 `make test` pipes through [`gorderly`](https://github.com/woodie/gorderly)
 for RSpec-style documentation output; without it installed, run
 `go test -v ./...` or `go test ./...` directly instead.
+
+## Learn more
+
+- [`expect`](https://github.com/woodie/expect) -- the matcher half of this
+  pairing; `spec` has no dependency on it.
+- [`gorderly`'s docs/FRAMEWORK.md](https://github.com/woodie/gorderly/blob/main/docs/FRAMEWORK.md) --
+  full suites combining `spec` + `expect`: context nesting, the `subject`
+  pattern, stubbing, `httptest`, and interface test doubles.
