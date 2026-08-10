@@ -281,3 +281,36 @@ and `humane`'s `time_test.go` (both call `describe(...)` for real, alias
 kept), `lambada` (every file across both packages calls `describe(...)`
 for real). See each repo's own `docs/COWORK.md` for the file-by-file
 detail.
+
+## Picked back up: the module-path rename, no longer left undecided
+
+The "real open question -- bigger than this session's scope" flagged
+above (deliberately skipping the Go Reference badge because `go.mod`
+still declared `module github.com/sclevine/spec`) is now being answered.
+Filed as [woodie/spec#3](https://github.com/woodie/spec/issues/3):
+`sclevine` never responded to the Jul 18 email, and public writing about
+this pairing is now in scope, which makes the current state (clone the
+fork, open `go.mod`, see upstream's own module path) a real point of
+confusion for a first-time reader in a way it wasn't for four consumers
+all owned by the same person.
+
+Full implementation plan in `docs/PLAN_module_rename.md`,
+covering the internal self-import fixes (`report/log.go`,
+`report/terminal.go`, `spec_test.go`, `options_test.go`), the version to
+tag (`v0.3.0` proposed, continuing the existing sequence rather than a
+symbolic `v1.0.0`), and the per-consumer migration for `expect`, `humane`,
+`lambada` (drop the `replace`, one line becomes plain `require`) and
+`gorderly` (a real unlock, not just cleanup -- the `go install`/`replace`
+conflict that forced `v0.4.1`'s revert to plain upstream disappears once
+`woodie/spec` is requirable directly, so `gorderly` can finally adopt
+`BeforeEach`/`AfterEach` in its own suite too).
+
+Explicitly not a build-safety fix -- worth being honest about this since
+it's the instinct that started the thread. Every current consumer already
+resolves `spec` through the `replace` directive straight to
+`github.com/woodie/spec`'s own source and has `go.sum` checksums under
+that path already; `sclevine` deleting the upstream repo today wouldn't
+break anything already pinned. What the rename actually buys is
+first-time adoption (`go get github.com/woodie/spec` just working,
+pkg.go.dev indexing the real path) -- planning stage only, nothing
+implemented yet.
