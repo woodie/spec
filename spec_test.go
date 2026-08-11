@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sclevine/spec"
-	"github.com/sclevine/spec/report"
+	"github.com/woodie/spec"
+	"github.com/woodie/spec/report"
 )
 
 type recorder func(*testing.T, string) func()
