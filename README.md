@@ -3,6 +3,7 @@
 [![go.mod version](https://img.shields.io/github/go-mod/go-version/woodie/spec)](https://github.com/woodie/spec)
 [![CI](https://github.com/woodie/spec/actions/workflows/ci.yml/badge.svg)](https://github.com/woodie/spec/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/woodie/spec.svg)](https://github.com/woodie/spec/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/woodie/spec.svg)](https://pkg.go.dev/github.com/woodie/spec)
 [![License](https://img.shields.io/github/license/woodie/spec.svg)](LICENSE)
 
 This is [`woodie`](https://github.com/woodie)'s fork of

@@ -4,7 +4,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/sclevine/spec"
+	"github.com/woodie/spec"
 )
 
 // Log reports specs via the testing log methods and only affects verbose runs.

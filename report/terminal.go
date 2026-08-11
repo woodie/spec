@@ -5,7 +5,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/sclevine/spec"
+	"github.com/woodie/spec"
 )
 
 // Terminal reports specs via stdout.
