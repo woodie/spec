@@ -66,26 +66,33 @@ func TestCalculator(t *testing.T) {
 
         describe("#divide", func() {
             var numerator, denominator, result int
+            it.BeforeEach(func() { numerator, denominator = 10, 2 })
             it.JustBeforeEach(func() {
                 result = calculator.Divide(numerator, denominator)
             })
 
-            context("dividing evenly", func() {
-                it.BeforeEach(func() { numerator, denominator = 10, 2 })
+            it("returns the quotient", func() {
+                if result != 5 {
+                    t.Error("expected 5")
+                }
+            })
 
-                it("returns the quotient", func() {
-                    if result != 5 {
-                        t.Error("expected 5")
+            context("when the numerator leaves a remainder", func() {
+                it.BeforeEach(func() { numerator = 7 })
+
+                it("drops the remainder", func() {
+                    if result != 3 {
+                        t.Error("expected 3")
                     }
                 })
             })
 
-            context("dividing with a remainder", func() {
-                it.BeforeEach(func() { numerator, denominator = 7, 2 })
+            context("when the denominator is 1", func() {
+                it.BeforeEach(func() { denominator = 1 })
 
-                it("truncates toward zero", func() {
-                    if result != 3 {
-                        t.Error("expected 3")
+                it("returns the numerator", func() {
+                    if result != 10 {
+                        t.Error("expected 10")
                     }
                 })
             })
@@ -94,11 +101,16 @@ func TestCalculator(t *testing.T) {
 }
 ```
 
-`it.JustBeforeEach` runs after every `it.BeforeEach` at every nesting
-level, immediately before the test itself -- so `numerator`/`denominator`
-are always set before `calculator.Divide` runs, and each `context` only
-states what's different about its own inputs. Same shape as Ginkgo's
-`JustBeforeEach`.
+`#divide` sets default inputs in an ordinary `it.BeforeEach`, and each
+`context` overrides only the one it's about. The call itself can't go in
+that `it.BeforeEach`, because `spec` runs a parent's `it.BeforeEach` before
+its children's: it would divide 10 by 2 every time, before any `context`
+had changed an input. `it.JustBeforeEach` runs after every `it.BeforeEach`
+at every nesting level, immediately before the test itself, so it always
+sees the final inputs, and each `it` just checks `result`. Same shape as
+Ginkgo's `JustBeforeEach`. In RSpec terms, the defaults play the part of
+`let`, and `it.JustBeforeEach` plays `subject`, which RSpec can leave lazy
+instead.
 
 With less nesting:
 
