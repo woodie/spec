@@ -4,15 +4,15 @@ Cross-project conventions are in `~/workspace/woodie/docs/COWORK.md`.
 
 ## What this is
 
-A personal fork of [`sclevine/spec`](https://github.com/sclevine/spec),
-currently sitting on plain `master` with no divergence from upstream.
-`expect`, `gorderly`, `humane`, and every other consumer in this account
-depend on plain upstream `sclevine/spec` directly, not this fork -- see
-"Reversal: moved off the `woodie/spec` fork" in `expect`'s/`gorderly`'s/
-`humane`'s own `docs/COWORK.md` for why an earlier version of this fork
-(built around a `RunAliased` convenience wrapper) got walked back. That
-reversal was about unnecessary API surface, not a decision to never use
-this fork again -- see below for why it's back in play.
+A fork of [`sclevine/spec`](https://github.com/sclevine/spec), published
+under its own module path, `github.com/woodie/spec` (`v0.3.0`). It adds
+`BeforeEach`/`AfterEach`/`JustBeforeEach` on top of upstream. `expect`,
+`gorderly`, `humane`, and `lambada` all require it directly.
+
+An earlier version of this fork, built around a `RunAliased` convenience
+wrapper, was walked back (see "Reversal: moved off the `woodie/spec` fork"
+in `expect`'s/`gorderly`'s/`humane`'s own `docs/COWORK.md`). That was about
+unnecessary API surface, not a decision against the fork itself.
 
 ## Upstream looks dormant
 
@@ -78,15 +78,12 @@ Why each piece:
   complaint. We already solved this for Kotest with a small extension
   ([`kwick`](https://github.com/woodie/kwick)'s `JustBeforeEachExtension`).
 
-Drafted a real issue (`ISSUE_DRAFT_justbeforeeach.md` in this repo's root,
-not yet filed) covering both the rename and the new hook together, with a
-concrete implementation shape sketched against `spec.go`'s actual hook
-mechanism (the `specHooks`/`specHook` linked list, built via
-`hooks.next()`, run via `specHooks.run`). Updated to reflect the
-deprecated-alias approach once that decision landed. Implemented on the
-`beforeeach-justbeforeeach` feature branch (see below), not yet confirmed
-against a real Go toolchain (no Go in this sandbox -- see
-`~/workspace/woodie/docs/COWORK.md`'s "Working on unfamiliar stacks").
+Filed as [woodie/spec#1](https://github.com/woodie/spec/issues/1), covering
+both the rename and the new hook, with the implementation sketched against
+`spec.go`'s own hook mechanism (the `specHooks`/`specHook` linked list,
+built via `hooks.next()`, run via `specHooks.run`). Shipped through PR #2
+from the `beforeeach-justbeforeeach` branch and released as `v0.2.0`; the
+issue is closed.
 
 **Fallout, named up front, not a surprise for later:** every consumer in
 this account that aliases `it.Before`/`it.After` (`gorderly`, `expect`,
@@ -198,15 +195,9 @@ defaults.
 Rewrote the opening to point explicitly at
 [upstream's own README](https://github.com/sclevine/spec/blob/master/README.md)
 and state directly why this fork exists (naming consistency, upstream
-dormancy) and its current status (rename/`JustBeforeEach` planned, not
-shipped -- this checkout still behaves exactly like upstream today).
-Dropped the Travis/GoDoc badges -- both pointed at upstream's own
+dormancy). Dropped the Travis/GoDoc badges -- both pointed at upstream's own
 `sclevine/spec` CI/pkg.go.dev entries, not this fork's, so they were
-misleading rather than just stale. No CI configured on this fork yet
-(only the old `.travis.yml`, and Travis itself is effectively dead for
-projects like this); worth a real GitHub Actions workflow (matching
-`gorderly`'s/`expect`'s own `ci.yml` shape) once there's real code to test
-against, not before.
+misleading rather than just stale.
 
 ## Done: README example renamed `when` -> `describe`/`context`
 
@@ -219,27 +210,11 @@ level, `context := describe` aliased for nested groups, documented in
 every consumer's own `docs/FRAMEWORK.md`). Updated the fork's README
 example directly to `describe`/`context` so the fork's own docs describe
 how this account actually writes `spec` suites, not upstream's original
-naming. Left `it.Before`/`it.After` as-is in that same example for now,
-since the rename above hasn't shipped yet -- update this example to
-`it.BeforeEach`/`it.AfterEach` in the same pass that implements the
-rename, so the README never describes a method that doesn't exist yet.
-`spec_test.go`/`options_test.go` (upstream's own test suite) still use
+naming. The example now uses `it.BeforeEach`/`it.AfterEach`, updated in
+the same pass that shipped the rename. `spec_test.go`/`options_test.go` (upstream's own test suite) still use
 `when` -- left untouched for now, since rewriting real test code is a
 bigger, riskier change than a README example; worth a separate pass if
 wanted.
-
-Next steps once the issue's filed: implement on a real branch (rename
-plus the new hook), add/update spec coverage, confirm on the user's own
-Mac, then work through each consumer one at a time (`gorderly`, `expect`,
-`humane`, `lambada`) updating both the aliasing line and every call site,
-confirming clean per consumer -- same "publish first, then bump each
-consumer's pin" sequence as any other shared-library change, per the
-cross-project doc's "Shared libraries across sibling repos" section.
-`gorderly`'s own `docs/FRAMEWORK.md` will also need its "Why `spec`, not
-Ginkgo"/"subject pattern"/"Aliasing `spec`'s structural functions"
-sections updated once this ships, since they currently describe the gap
-this fork is about to close and the aliasing convention this fork is
-about to change.
 
 ## Done: flipped which word is the base name -- `context` now, not `describe`
 
@@ -282,28 +257,26 @@ kept), `lambada` (every file across both packages calls `describe(...)`
 for real). See each repo's own `docs/COWORK.md` for the file-by-file
 detail.
 
-## Picked back up: the module-path rename, no longer left undecided
+## Done: module path renamed to `github.com/woodie/spec` (`v0.3.0`)
 
-The "real open question -- bigger than this session's scope" flagged
-above (deliberately skipping the Go Reference badge because `go.mod`
-still declared `module github.com/sclevine/spec`) is now being answered.
-Filed as [woodie/spec#3](https://github.com/woodie/spec/issues/3):
+The open question flagged above (no Go Reference badge while `go.mod`
+still declared `module github.com/sclevine/spec`) is settled. Filed as
+[woodie/spec#3](https://github.com/woodie/spec/issues/3), shipped through
+PR #4 and tagged `v0.3.0`. Why:
 `sclevine` never responded to the Jul 18 email, and public writing about
 this pairing is now in scope, which makes the current state (clone the
 fork, open `go.mod`, see upstream's own module path) a real point of
 confusion for a first-time reader in a way it wasn't for four consumers
 all owned by the same person.
 
-Full implementation plan in `docs/PLAN_module_rename.md`,
-covering the internal self-import fixes (`report/log.go`,
-`report/terminal.go`, `spec_test.go`, `options_test.go`), the version to
-tag (`v0.3.0` proposed, continuing the existing sequence rather than a
-symbolic `v1.0.0`), and the per-consumer migration for `expect`, `humane`,
-`lambada` (drop the `replace`, one line becomes plain `require`) and
-`gorderly` (a real unlock, not just cleanup -- the `go install`/`replace`
-conflict that forced `v0.4.1`'s revert to plain upstream disappears once
-`woodie/spec` is requirable directly, so `gorderly` can finally adopt
-`BeforeEach`/`AfterEach` in its own suite too).
+The change fixed the internal self-imports (`report/log.go`,
+`report/terminal.go`, `spec_test.go`, `options_test.go`) and continued the
+existing version sequence (`v0.3.0`, not a symbolic `v1.0.0`). All four
+consumers (`expect`, `gorderly`, `humane`, `lambada`) now plainly
+`require github.com/woodie/spec v0.3.0`, with no `replace` left. For
+`gorderly` this was a real unlock, not just cleanup: the `go install`/
+`replace` conflict that forced its `v0.4.1` revert to plain upstream went
+away, so it could adopt `BeforeEach`/`AfterEach` in its own suite too.
 
 Explicitly not a build-safety fix -- worth being honest about this since
 it's the instinct that started the thread. Every current consumer already
@@ -312,5 +285,4 @@ resolves `spec` through the `replace` directive straight to
 that path already; `sclevine` deleting the upstream repo today wouldn't
 break anything already pinned. What the rename actually buys is
 first-time adoption (`go get github.com/woodie/spec` just working,
-pkg.go.dev indexing the real path) -- planning stage only, nothing
-implemented yet.
+pkg.go.dev indexing the real path).
