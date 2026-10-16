@@ -18,8 +18,7 @@ change itself.
 **Status:** `it.BeforeEach`/`it.AfterEach`/`it.JustBeforeEach` are here.
 `it.Before`/`it.After` still work too -- kept as deprecated aliases so no
 existing consumer breaks -- but `golangci-lint`'s default `staticcheck`
-check will flag them as deprecated. See `docs/COWORK.md` for the full
-reasoning and rollout plan.
+check will flag them as deprecated.
 
 Spec is a simple BDD test organizer for Go. It minimally extends the standard
 library `testing` package by facilitating easy organization of Go 1.7+
@@ -99,7 +98,7 @@ func TestCalculator(t *testing.T) {
 level, immediately before the test itself -- so `numerator`/`denominator`
 are always set before `calculator.Divide` runs, and each `context` only
 states what's different about its own inputs. Same shape as Ginkgo's
-`JustBeforeEach`; see `docs/COWORK.md` for the full reasoning.
+`JustBeforeEach`.
 
 With less nesting:
 
