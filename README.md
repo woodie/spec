@@ -101,16 +101,16 @@ func TestCalculator(t *testing.T) {
 }
 ```
 
-`#divide` sets default inputs in an ordinary `it.BeforeEach`, and each
+Here, `#divide` sets default inputs in an ordinary `it.BeforeEach`, and each
 `context` overrides only the one it's about. The call itself can't go in
 that `it.BeforeEach`, because `spec` runs a parent's `it.BeforeEach` before
-its children's: it would divide 10 by 2 every time, before any `context`
-had changed an input. `it.JustBeforeEach` runs after every `it.BeforeEach`
-at every nesting level, immediately before the test itself, so it always
-sees the final inputs, and each `it` just checks `result`. Same shape as
-Ginkgo's `JustBeforeEach`. In RSpec terms, the defaults play the part of
-`let`, and `it.JustBeforeEach` plays `subject`, which RSpec can leave lazy
-instead.
+its children's: it would divide 10 by 2 every time, before any `context` had
+changed an input. Because `it.JustBeforeEach` runs after every
+`it.BeforeEach` at every nesting level, immediately before the test itself,
+it always sees the final inputs, and each `it` just checks `result`. Same
+shape as Ginkgo's `JustBeforeEach`. In RSpec terms, the defaults play the
+part of `let`, and `it.JustBeforeEach` plays `subject`, which RSpec can
+leave lazy instead.
 
 With less nesting:
 
